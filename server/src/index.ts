@@ -6,23 +6,25 @@ import superjson from 'superjson';
 import { z } from 'zod';
 
 // Import schemas
-import { 
-  createStudentInputSchema, 
-  updateStudentInputSchema, 
-  studentIdSchema, 
-  nisnQuerySchema, 
-  studentFilterSchema 
+import {
+  loginInputSchema,
+  registerInputSchema,
+  updateStudentProfileInputSchema,
+  createRegistrationInputSchema,
+  updateRegistrationStatusInputSchema
 } from './schema';
 
 // Import handlers
-import { createStudent } from './handlers/create_student';
-import { getStudents, getAllStudents } from './handlers/get_students';
-import { getStudentById } from './handlers/get_student_by_id';
-import { getStudentByNisn } from './handlers/get_student_by_nisn';
-import { updateStudent } from './handlers/update_student';
-import { deleteStudent } from './handlers/delete_student';
-import { generateStudentCard, generateStudentCardByNisn } from './handlers/generate_student_card';
-import { verifyQrCode } from './handlers/verify_qr_code';
+import { loginUser } from './handlers/auth_login';
+import { registerUser } from './handlers/auth_register';
+import { getDashboardData } from './handlers/get_dashboard_data';
+import { getStudentProfile } from './handlers/get_student_profile';
+import { updateStudentProfile } from './handlers/update_student_profile';
+import { getAvailableCourses } from './handlers/get_available_courses';
+import { createRegistration } from './handlers/create_registration';
+import { getStudentRegistrations } from './handlers/get_student_registrations';
+import { updateRegistrationStatus } from './handlers/update_registration_status';
+import { withdrawRegistration } from './handlers/withdraw_registration';
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -32,52 +34,62 @@ const publicProcedure = t.procedure;
 const router = t.router;
 
 const appRouter = router({
-  // Health check endpoint
+  // Health check
   healthcheck: publicProcedure.query(() => {
     return { status: 'ok', timestamp: new Date().toISOString() };
   }),
 
-  // Student registration and management endpoints
-  createStudent: publicProcedure
-    .input(createStudentInputSchema)
-    .mutation(({ input }) => createStudent(input)),
+  // Authentication routes
+  login: publicProcedure
+    .input(loginInputSchema)
+    .mutation(({ input }) => loginUser(input)),
 
-  getStudents: publicProcedure
-    .input(studentFilterSchema.optional())
-    .query(({ input }) => getStudents(input)),
+  register: publicProcedure
+    .input(registerInputSchema)
+    .mutation(({ input }) => registerUser(input)),
 
-  getAllStudents: publicProcedure
-    .query(() => getAllStudents()),
+  // Dashboard route
+  getDashboard: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getDashboardData(input.userId)),
 
-  getStudentById: publicProcedure
-    .input(studentIdSchema)
-    .query(({ input }) => getStudentById(input.id)),
+  // Student profile routes
+  getStudentProfile: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getStudentProfile(input.userId)),
 
-  getStudentByNisn: publicProcedure
-    .input(nisnQuerySchema)
-    .query(({ input }) => getStudentByNisn(input.nisn)),
+  updateStudentProfile: publicProcedure
+    .input(updateStudentProfileInputSchema)
+    .mutation(({ input }) => updateStudentProfile(input)),
 
-  updateStudent: publicProcedure
-    .input(updateStudentInputSchema)
-    .mutation(({ input }) => updateStudent(input)),
+  // Course routes
+  getAvailableCourses: publicProcedure
+    .input(z.object({
+      semester: z.enum(['fall', 'spring', 'summer']),
+      year: z.number().int()
+    }))
+    .query(({ input }) => getAvailableCourses(input.semester, input.year)),
 
-  deleteStudent: publicProcedure
-    .input(studentIdSchema)
-    .mutation(({ input }) => deleteStudent(input.id)),
+  // Registration routes
+  createRegistration: publicProcedure
+    .input(createRegistrationInputSchema)
+    .mutation(({ input }) => createRegistration(input)),
 
-  // Student card generation endpoints
-  generateStudentCard: publicProcedure
-    .input(studentIdSchema)
-    .query(({ input }) => generateStudentCard(input.id)),
+  getStudentRegistrations: publicProcedure
+    .input(z.object({ studentProfileId: z.number() }))
+    .query(({ input }) => getStudentRegistrations(input.studentProfileId)),
 
-  generateStudentCardByNisn: publicProcedure
-    .input(nisnQuerySchema)
-    .query(({ input }) => generateStudentCardByNisn(input.nisn)),
+  withdrawRegistration: publicProcedure
+    .input(z.object({
+      registrationId: z.number(),
+      studentProfileId: z.number()
+    }))
+    .mutation(({ input }) => withdrawRegistration(input.registrationId, input.studentProfileId)),
 
-  // QR code verification endpoint
-  verifyQrCode: publicProcedure
-    .input(z.object({ qrCode: z.string() }))
-    .query(({ input }) => verifyQrCode(input.qrCode)),
+  // Admin routes
+  updateRegistrationStatus: publicProcedure
+    .input(updateRegistrationStatusInputSchema)
+    .mutation(({ input }) => updateRegistrationStatus(input)),
 });
 
 export type AppRouter = typeof appRouter;
@@ -95,7 +107,6 @@ async function start() {
   });
   server.listen(port);
   console.log(`TRPC server listening at port: ${port}`);
-  console.log(`Student Registration System for SMKN 1 Praya Barat is ready!`);
 }
 
 start();

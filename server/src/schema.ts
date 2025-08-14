@@ -1,133 +1,146 @@
 import { z } from 'zod';
 
-// Gender enum schema
-export const genderSchema = z.enum(['LAKI_LAKI', 'PEREMPUAN']);
-export type Gender = z.infer<typeof genderSchema>;
-
-// Religion enum schema
-export const religionSchema = z.enum(['ISLAM', 'KRISTEN', 'KATOLIK', 'HINDU', 'BUDDHA', 'KONGHUCU']);
-export type Religion = z.infer<typeof religionSchema>;
-
-// Living status enum schema
-export const livingStatusSchema = z.enum(['ORANG_TUA', 'WALI', 'SENDIRI', 'KOST', 'ASRAMA']);
-export type LivingStatus = z.infer<typeof livingStatusSchema>;
-
-// Student registration type enum schema
-export const registrationTypeSchema = z.enum(['BARU', 'DAFTAR_ULANG']);
-export type RegistrationType = z.infer<typeof registrationTypeSchema>;
-
-// Student schema with proper type handling
-export const studentSchema = z.object({
+// User schema for authentication
+export const userSchema = z.object({
   id: z.number(),
-  nisn: z.string(),
-  nama: z.string(),
-  jenis_kelamin: genderSchema,
-  tempat_lahir: z.string(),
-  tanggal_lahir: z.coerce.date(),
-  dusun: z.string(),
-  desa: z.string(),
-  kecamatan: z.string(),
-  alamat_lengkap: z.string(),
-  nomor_hp: z.string(),
-  agama: religionSchema,
-  jumlah_saudara: z.number().int().nonnegative(),
-  anak_ke: z.number().int().positive(),
-  status_tinggal: livingStatusSchema,
-  asal_sekolah: z.string(),
-  foto_siswa: z.string().nullable(), // Base64 encoded image or file path
-  qr_code: z.string(), // Unique QR code identifier
-  jenis_pendaftaran: registrationTypeSchema,
+  email: z.string().email(),
+  password_hash: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  role: z.enum(['student', 'admin']),
   created_at: z.coerce.date(),
   updated_at: z.coerce.date()
 });
 
-export type Student = z.infer<typeof studentSchema>;
+export type User = z.infer<typeof userSchema>;
 
-// Input schema for creating/registering students
-export const createStudentInputSchema = z.object({
-  nisn: z.string().min(10, 'NISN harus 10 digit').max(10, 'NISN harus 10 digit'),
-  nama: z.string().min(1, 'Nama tidak boleh kosong'),
-  jenis_kelamin: genderSchema,
-  tempat_lahir: z.string().min(1, 'Tempat lahir tidak boleh kosong'),
-  tanggal_lahir: z.coerce.date(),
-  dusun: z.string().min(1, 'Dusun tidak boleh kosong'),
-  desa: z.string().min(1, 'Desa tidak boleh kosong'),
-  kecamatan: z.string().min(1, 'Kecamatan tidak boleh kosong'),
-  alamat_lengkap: z.string().min(1, 'Alamat lengkap tidak boleh kosong'),
-  nomor_hp: z.string().min(10, 'Nomor HP minimal 10 digit'),
-  agama: religionSchema,
-  jumlah_saudara: z.number().int().nonnegative(),
-  anak_ke: z.number().int().positive(),
-  status_tinggal: livingStatusSchema,
-  asal_sekolah: z.string().min(1, 'Asal sekolah tidak boleh kosong'),
-  foto_siswa: z.string().nullable(), // Base64 encoded image or file path
-  jenis_pendaftaran: registrationTypeSchema
-});
-
-export type CreateStudentInput = z.infer<typeof createStudentInputSchema>;
-
-// Input schema for updating student data
-export const updateStudentInputSchema = z.object({
+// Student profile schema
+export const studentProfileSchema = z.object({
   id: z.number(),
-  nisn: z.string().min(10).max(10).optional(),
-  nama: z.string().min(1).optional(),
-  jenis_kelamin: genderSchema.optional(),
-  tempat_lahir: z.string().min(1).optional(),
-  tanggal_lahir: z.coerce.date().optional(),
-  dusun: z.string().min(1).optional(),
-  desa: z.string().min(1).optional(),
-  kecamatan: z.string().min(1).optional(),
-  alamat_lengkap: z.string().min(1).optional(),
-  nomor_hp: z.string().min(10).optional(),
-  agama: religionSchema.optional(),
-  jumlah_saudara: z.number().int().nonnegative().optional(),
-  anak_ke: z.number().int().positive().optional(),
-  status_tinggal: livingStatusSchema.optional(),
-  asal_sekolah: z.string().min(1).optional(),
-  foto_siswa: z.string().nullable().optional(),
-  jenis_pendaftaran: registrationTypeSchema.optional()
+  user_id: z.number(),
+  student_id: z.string(),
+  date_of_birth: z.coerce.date(),
+  phone: z.string().nullable(),
+  address: z.string().nullable(),
+  emergency_contact_name: z.string().nullable(),
+  emergency_contact_phone: z.string().nullable(),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date()
 });
 
-export type UpdateStudentInput = z.infer<typeof updateStudentInputSchema>;
+export type StudentProfile = z.infer<typeof studentProfileSchema>;
 
-// Student ID query schema
-export const studentIdSchema = z.object({
-  id: z.number()
-});
-
-export type StudentIdInput = z.infer<typeof studentIdSchema>;
-
-// NISN query schema
-export const nisnQuerySchema = z.object({
-  nisn: z.string().min(10).max(10)
-});
-
-export type NisnQueryInput = z.infer<typeof nisnQuerySchema>;
-
-// Student card data schema for printing
-export const studentCardSchema = z.object({
+// Course schema
+export const courseSchema = z.object({
   id: z.number(),
-  nisn: z.string(),
-  nama: z.string(),
-  tempat_lahir: z.string(),
-  tanggal_lahir: z.coerce.date(),
-  alamat_lengkap: z.string(),
-  foto_siswa: z.string().nullable(),
-  qr_code: z.string(),
-  created_at: z.coerce.date()
+  code: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  credits: z.number().int(),
+  semester: z.enum(['fall', 'spring', 'summer']),
+  year: z.number().int(),
+  max_enrollment: z.number().int(),
+  current_enrollment: z.number().int(),
+  is_active: z.boolean(),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date()
 });
 
-export type StudentCard = z.infer<typeof studentCardSchema>;
+export type Course = z.infer<typeof courseSchema>;
 
-// Filter schema for student queries
-export const studentFilterSchema = z.object({
-  jenis_pendaftaran: registrationTypeSchema.optional(),
-  jenis_kelamin: genderSchema.optional(),
-  agama: religionSchema.optional(),
-  kecamatan: z.string().optional(),
-  asal_sekolah: z.string().optional(),
-  limit: z.number().int().positive().optional(),
-  offset: z.number().int().nonnegative().optional()
+// Registration schema
+export const registrationSchema = z.object({
+  id: z.number(),
+  student_profile_id: z.number(),
+  course_id: z.number(),
+  semester: z.enum(['fall', 'spring', 'summer']),
+  year: z.number().int(),
+  status: z.enum(['pending', 'approved', 'rejected', 'withdrawn']),
+  registration_date: z.coerce.date(),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date()
 });
 
-export type StudentFilter = z.infer<typeof studentFilterSchema>;
+export type Registration = z.infer<typeof registrationSchema>;
+
+// Input schemas for authentication
+export const loginInputSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1)
+});
+
+export type LoginInput = z.infer<typeof loginInputSchema>;
+
+export const registerInputSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
+  student_id: z.string().min(1),
+  date_of_birth: z.coerce.date(),
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  emergency_contact_name: z.string().nullable().optional(),
+  emergency_contact_phone: z.string().nullable().optional()
+});
+
+export type RegisterInput = z.infer<typeof registerInputSchema>;
+
+// Input schema for creating student profile
+export const createStudentProfileInputSchema = z.object({
+  user_id: z.number(),
+  student_id: z.string(),
+  date_of_birth: z.coerce.date(),
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  emergency_contact_name: z.string().nullable().optional(),
+  emergency_contact_phone: z.string().nullable().optional()
+});
+
+export type CreateStudentProfileInput = z.infer<typeof createStudentProfileInputSchema>;
+
+// Input schema for updating student profile
+export const updateStudentProfileInputSchema = z.object({
+  id: z.number(),
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  emergency_contact_name: z.string().nullable().optional(),
+  emergency_contact_phone: z.string().nullable().optional()
+});
+
+export type UpdateStudentProfileInput = z.infer<typeof updateStudentProfileInputSchema>;
+
+// Input schema for course registration
+export const createRegistrationInputSchema = z.object({
+  student_profile_id: z.number(),
+  course_id: z.number(),
+  semester: z.enum(['fall', 'spring', 'summer']),
+  year: z.number().int()
+});
+
+export type CreateRegistrationInput = z.infer<typeof createRegistrationInputSchema>;
+
+// Input schema for updating registration status
+export const updateRegistrationStatusInputSchema = z.object({
+  id: z.number(),
+  status: z.enum(['pending', 'approved', 'rejected', 'withdrawn'])
+});
+
+export type UpdateRegistrationStatusInput = z.infer<typeof updateRegistrationStatusInputSchema>;
+
+// Auth response schema
+export const authResponseSchema = z.object({
+  user: userSchema,
+  token: z.string().optional()
+});
+
+export type AuthResponse = z.infer<typeof authResponseSchema>;
+
+// Dashboard data schema
+export const dashboardDataSchema = z.object({
+  student_profile: studentProfileSchema,
+  current_registrations: z.array(registrationSchema),
+  available_courses: z.array(courseSchema)
+});
+
+export type DashboardData = z.infer<typeof dashboardDataSchema>;
