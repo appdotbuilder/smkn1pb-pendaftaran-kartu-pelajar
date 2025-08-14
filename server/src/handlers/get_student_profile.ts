@@ -1,19 +1,34 @@
+import { db } from '../db';
+import { studentProfilesTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type StudentProfile } from '../schema';
 
-export async function getStudentProfile(userId: number): Promise<StudentProfile | null> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching a student profile by user ID.
-    // Should return null if no profile exists for the user.
-    return Promise.resolve({
-        id: 1,
-        user_id: userId,
-        student_id: 'STU123456',
-        date_of_birth: new Date('2000-01-01'),
-        phone: null,
-        address: null,
-        emergency_contact_name: null,
-        emergency_contact_phone: null,
-        created_at: new Date(),
-        updated_at: new Date()
-    });
-}
+export const getStudentProfile = async (userId: number): Promise<StudentProfile | null> => {
+  try {
+    const result = await db.select()
+      .from(studentProfilesTable)
+      .where(eq(studentProfilesTable.user_id, userId))
+      .execute();
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const profile = result[0];
+    return {
+      id: profile.id,
+      user_id: profile.user_id,
+      student_id: profile.student_id,
+      date_of_birth: profile.date_of_birth,
+      phone: profile.phone,
+      address: profile.address,
+      emergency_contact_name: profile.emergency_contact_name,
+      emergency_contact_phone: profile.emergency_contact_phone,
+      created_at: profile.created_at,
+      updated_at: profile.updated_at
+    };
+  } catch (error) {
+    console.error('Student profile retrieval failed:', error);
+    throw error;
+  }
+};

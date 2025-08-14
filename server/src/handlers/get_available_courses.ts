@@ -1,24 +1,28 @@
+import { db } from '../db';
+import { coursesTable } from '../db/schema';
+import { eq, and, lt } from 'drizzle-orm';
 import { type Course } from '../schema';
 
-export async function getAvailableCourses(semester: 'fall' | 'spring' | 'summer', year: number): Promise<Course[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all active courses for a specific semester and year.
-    // Should filter by semester, year, and is_active = true.
-    // Should exclude courses that are at max enrollment capacity.
-    return Promise.resolve([
-        {
-            id: 1,
-            code: 'CS101',
-            name: 'Introduction to Computer Science',
-            description: 'Basic programming concepts and computer science fundamentals',
-            credits: 3,
-            semester: semester,
-            year: year,
-            max_enrollment: 30,
-            current_enrollment: 25,
-            is_active: true,
-            created_at: new Date(),
-            updated_at: new Date()
-        }
-    ]);
-}
+export const getAvailableCourses = async (semester: 'fall' | 'spring' | 'summer', year: number): Promise<Course[]> => {
+  try {
+    // Query active courses for the specified semester and year
+    // that haven't reached maximum enrollment
+    const results = await db.select()
+      .from(coursesTable)
+      .where(
+        and(
+          eq(coursesTable.semester, semester),
+          eq(coursesTable.year, year),
+          eq(coursesTable.is_active, true),
+          lt(coursesTable.current_enrollment, coursesTable.max_enrollment)
+        )
+      )
+      .orderBy(coursesTable.code)
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to get available courses:', error);
+    throw error;
+  }
+};

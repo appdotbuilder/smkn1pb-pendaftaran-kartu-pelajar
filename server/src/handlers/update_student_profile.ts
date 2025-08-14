@@ -1,19 +1,45 @@
+import { db } from '../db';
+import { studentProfilesTable } from '../db/schema';
 import { type UpdateStudentProfileInput, type StudentProfile } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function updateStudentProfile(input: UpdateStudentProfileInput): Promise<StudentProfile> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is updating a student profile with new contact information.
-    // Should update only the provided fields and return the updated profile.
-    return Promise.resolve({
-        id: input.id,
-        user_id: 1, // Placeholder
-        student_id: 'STU123456',
-        date_of_birth: new Date('2000-01-01'),
-        phone: input.phone || null,
-        address: input.address || null,
-        emergency_contact_name: input.emergency_contact_name || null,
-        emergency_contact_phone: input.emergency_contact_phone || null,
-        created_at: new Date(),
-        updated_at: new Date()
-    });
-}
+export const updateStudentProfile = async (input: UpdateStudentProfileInput): Promise<StudentProfile> => {
+  try {
+    // Build the update object with only provided fields
+    const updateData: any = {
+      updated_at: new Date()
+    };
+
+    if (input.phone !== undefined) {
+      updateData.phone = input.phone;
+    }
+
+    if (input.address !== undefined) {
+      updateData.address = input.address;
+    }
+
+    if (input.emergency_contact_name !== undefined) {
+      updateData.emergency_contact_name = input.emergency_contact_name;
+    }
+
+    if (input.emergency_contact_phone !== undefined) {
+      updateData.emergency_contact_phone = input.emergency_contact_phone;
+    }
+
+    // Update the student profile
+    const result = await db.update(studentProfilesTable)
+      .set(updateData)
+      .where(eq(studentProfilesTable.id, input.id))
+      .returning()
+      .execute();
+
+    if (result.length === 0) {
+      throw new Error(`Student profile with id ${input.id} not found`);
+    }
+
+    return result[0];
+  } catch (error) {
+    console.error('Student profile update failed:', error);
+    throw error;
+  }
+};
